@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <style type="text/css">
+        body, html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: "微软雅黑";
+        }
+
+        #allmap {
+            height: 1000px;
+            width: 100%;
+        }
+
+        #control {
+            width: 100%;
+        }
+    </style>
+    <script type="text/javascript"
+            src="http://api.map.baidu.com/api?v=2.0&ak=VV174l1kOMtbCb3fvu16Ayyox4dYtcGT"></script>
+    <title>路线的生成</title>
+</head>
+<body>
+
+<div id="allmap"></div>
+
+<script type="text/javascript">
+    var map = new BMap.Map("allmap");
+    var point = new BMap.Point(117.138596, 36.680859);
+    map.centerAndZoom(point, 16);
+    map.enableScrollWheelZoom();
+
+    var locations_sets = [[117.132165, 36.679128], [117.138598, 36.680855], [117.141957, 36.675133], [117.14767, 36.669966]]
+
+    function locationPoint(locationPoints) {
+        var locations = [];
+        for (var i = 0; i <= locationPoints.length - 1; i++) {
+            var myPn = new BMap.Point(locationPoints[i][0], locationPoints[i][1]);  //雅居园
+            locations.push(myPn);
+        }
+        return locations;
+    }
+
+    var locations = locationPoint(locations_sets);
+    console.log(locations.length)
+
+
+    var p = [];  //折线点的集合
+    var driver = new BMap.DrivingRoute(map);
+
+    for (var i = 0; i <= locations.length - 2; i++) {
+        for (var j = 1; j <= locations.length - 1; j++) {
+            if ((j - i) === 1) {
+                driver.search(locations[i], locations[j])
+                driver.setSearchCompleteCallback(function () {
+                    var pots = driver.getResults().getPlan(0).getRoute(0).getPath();
+                    p = p.concat(pots);
+                    var polyline = new BMap.Polyline(p);
+                    map.addOverlay(polyline);
+                    var menu = new BMap.ContextMenu();
+                    var textMenuItem = [
+                        {
+                            text: "折线可编辑",
+                            callback: function () {
+                                polyline.enableEditing();
+                            }
+                        },
+                        {
+                            text: "折线不可编辑",
+                            callback: function () {
+                                polyline.disableEditing();
+                            }
+                        },
+                        {
+                            text: "编辑完成",
+                            callback: function () {
+                                var points = polyline.getPath();
+                            }
+                        }];
+                    for (var i = 0; i < textMenuItem.length; i++) {
+                        menu.addItem(new BMap.MenuItem(textMenuItem[i].text, textMenuItem[i].callback, 100));
+                    }
+                    map.addContextMenu(menu);
+                    p=[];
+                });
+            }
+        }
+    }
+
+</script>
+</body>
+</html>
